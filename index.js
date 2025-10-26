@@ -18,61 +18,65 @@ app.get("/users", async (req, res) => {
         }
         res.status(200).json(users)
 
-    }catch(error){
-        res.status(500).json({message: "Something went wrong"});
-
+    }catch(err){
+        console.error("Error in GET /users:", err);  
+        res.status(500).json({message: "Internal server error"});
     }
 });
 
 app.get("/users/:id", async (req, res) => {
     try{
-        const {id} = req.params
-        const user = await client.user.findUnique({
+        const id =parseInt(req.params.id);
+        const user = await prisma.user.findUnique({
             where: {
                 id: id
             }
         });
         if(!user){
-            res.status(500).json({
+           return res.status(404).json({
                 message: "user not found"
             })
         }
 
         console.log(user)
         res.status(200).json(user)
-    }catch(err){}
+    }catch(err){
+        console.error("Error in GET /users/:id:", err);  
+        res.status(500).json({message: "Internal server error"});
+
+    }
 })
 
 app.post("/users", async (req, res) => {
     try {
-        const {firstName, lastName, email} = req.body;
-        if(!firstName || !lastName || !email){
+        const {firstName, lastName, emailAddress} = req.body;
+        if(!firstName || !lastName || !emailAddress){
             return res.status(400).json({
                 message: "All fields are required!"
             })
         }
-        const user = await client.user.create({
+        const user = await prisma.user.create({
             data: {
                 firstName,
                 lastName,
-                email
+                emailAddress
             }
         }) 
         console.log(user);
         console.log(req.body)
         res.status(201).json({message: "Users created successfully", user})
     }catch(err){
-        console.log(err)
-        res.status(500).json({message: "Something went wrong"})
+        console.error("Error in POST /users:", err);  
+        res.status(500).json({message: "Internal server error"});
     }
-})
+});
 
 app.patch("/users/:id", async (req, res) => {
     try{
-        const id = req.params.id;
-        const {firstName, lastName, email} = req.body;
+        const id = parseInt(req.params.id);
+        const {firstName, lastName, emailAddress} = req.body;
         
-        const user =client.user.findunique({
+        const user = await prisma.user.findUnique({
             where: {id: id}
         })
         if (!user){
@@ -80,37 +84,42 @@ app.patch("/users/:id", async (req, res) => {
                 message: "User not found"
             })
         }
-        const newUser = await client.user.update({
-            where: {id:id},
-            data:{
-                firstName,
-                lastName,
-                email
-            }
+
+// Build update data dynamically
+        const updateData = {};
+        if (firstName!== undefined)
+            updateData.firstName = firstName;
+        if (lastName!== undefined)
+            updateData.lastName = lastName;
+        if (emailAddress!== undefined)
+            updateData.emailAddress = emailAddress;
+
+
+
+        const newUser = await prisma.user.update({
+            where: {id},
+            data: updateData
         })
-        console.log(newUser);
+
         res.status(200).json({message: `user updated successfully (${id})`, newUser})
     }catch(err){
-        console.log(err)
-        res.status(500).json({message: "Something went wrong"})
+        console.error("Error in PATCH /users/:id:", err);  
+        res.status(500).json({message: "Internal server error"});
     }
-})
+});
 
 app.delete("/users/:id", async (req, res) => {
     try{
-        const id = req.params.id;
-        const deletedUser = await client.user.delete({
+        const id = parseInt(req.params.id);
+        const deletedUser = await prisma.user.delete({
             where: {id: id}
         });
-        if (!deletedUser){
-            return res.status(404).json({
-                message: "User not found"
-            })
-        }
+        
         console.log(deletedUser)
         res.status(200).json({message: `User deleted successfully (${id})`, id})
     }catch(err){
-        res.status(500).json({message: "Something went wrong"})
+        console.error("Error in DELETE /users/:id:", err);  
+        res.status(500).json({message: "Internal server error"})
     }
 })
 
