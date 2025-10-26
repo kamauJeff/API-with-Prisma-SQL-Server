@@ -15,7 +15,7 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement()) @map("UserID")
+  id           Int      @id @default(autoincrement()) @map("UserID")
   firstName    String   @map("FirstName")
   lastName     String   @map("LastName")
   emailAddress String   @unique @map("EmailAddress")
